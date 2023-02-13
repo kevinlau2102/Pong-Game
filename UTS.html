@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Kevin Laurence">
+    <title>UTS Grafkom</title>
+    <script src="grafkom_lib.js"></script>
+</head>
+
+<body>
+    <h1>Pong Game</h1>
+    <canvas style="border:2px solid black" id="mycanvas" width="1000" height="500">
+
+    </canvas>
+    <script>
+        const canvas = document.querySelector("#mycanvas");
+        const ctx = canvas.getContext("2d");
+
+
+        let dataGambar = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+        let x = 100;
+        let y = 10;
+
+        let posX = canvas.width / 2;
+        let posY = canvas.height / 2;
+        let speed = 5;
+        let dx = 5
+        let dy = 1
+        let r = 10
+
+        let ball = {
+            x: posX,
+            y: posY,
+            dx: dx,
+            dy: dy,
+            radius: r,
+            r: 250,
+            g: 250,
+            b: 250,
+            speed: speed
+        }
+
+        let player1 = [
+            [50, 125],
+            [70, 125],
+            [70, 225],
+            [50, 225]
+        ]
+
+        let pusat1 = [60, 175]
+
+        let player2 = [
+            [930, 125],
+            [950, 125],
+            [950, 225],
+            [930, 225]
+        ]
+
+        let pusat2 = [940, 175]
+
+        function colorCheck(color1, color2) {
+            if (color1.r == color2.r && color1.g == color2.g && color1.b == color1.b) {
+                return true;
+            }
+            return false
+        }
+
+        function collisionCheck(ball, player) {
+            ball.right = ball.x + ball.radius;
+            ball.left = ball.x - ball.radius;
+            ball.bottom = ball.y + ball.radius;
+            ball.top = ball.y - ball.radius;
+
+            const warnaBall = { r: ball.r, g: ball.g, b: ball.b };
+
+            if (ball.right > player[0][0]) {
+                const warnaCollision = getTitik(dataGambar, { x: ball.right + 1, y: ball.y });
+                if (colorCheck(warnaCollision, warnaBall)) {
+                    return true;
+
+                }
+            }
+            if (ball.left < player[1][0]) {
+                const warnaCollision = getTitik(dataGambar, { x: ball.left - 1, y: ball.y });
+                if (colorCheck(warnaCollision, warnaBall)) {
+                    return true;
+                }
+            }
+            if (ball.top < player[2][1]) {
+                const warnaCollision = getTitik(dataGambar, { x: ball.x, y: ball.top - 1 });
+                if (colorCheck(warnaCollision, warnaBall)) {
+                    ball.dy = (ball.dy > 0) ? ball.dy : -ball.dy
+                    ball.y += 10;
+                    return true;
+                }
+            }
+            if (ball.bottom > player[0][1]) {
+                const warnaCollision = getTitik(dataGambar, { x: ball.x, y: ball.bottom + 1 });
+                if (colorCheck(warnaCollision, warnaBall)) {
+                    ball.dy = (ball.dy > 0) ? -ball.dy : ball.dy
+                    ball.y -= 10;
+                    return true;
+                }
+            }
+            return false
+        }
+
+        let score1 = 0;
+        let score2 = 0;
+
+        let start = false;
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = "black";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = "white";
+            ctx.font = "50px Verdana";
+            ctx.fillText(score1, 400, 50);
+            ctx.fillText(score2, 570, 50);
+            if (score1 >= 3) {
+                reset();
+                ctx.font = "50px Verdana";
+                ctx.fillText("Player 1 Win!", 60, 100);
+                cancelAnimationFrame(draw);
+            } else if (score2 >= 3) {
+                reset();
+                ctx.font = "50px Verdana";
+                ctx.fillText("Player 2 Win!", 600, 100);
+                cancelAnimationFrame(draw);
+            }
+
+
+            if (!start) {
+                ctx.fillText("Player 1", 100, 50);
+                ctx.fillText("Player 2", 700, 50);
+                ctx.fillText("Press Start", 360, 150);
+                ctx.font = "30px Verdana";
+                ctx.fillText("Key: W, S", 100, 100);
+                ctx.fillText("Key: Up, Down", 700, 100);
+            }
+            dataGambar = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+            x = ball.x;
+            y = ball.y;
+            radius = ball.radius;
+            dx = ball.dx;
+            dy = ball.dy;
+            r = ball.r;
+            g = ball.g;
+            b = ball.b;
+
+
+            kotakTitik(dataGambar, player1, { r: 250, g: 250, b: 250 });
+            kotakTitik(dataGambar, player2, { r: 250, g: 250, b: 250 });
+            boundaryFill(dataGambar, { x: pusat1[0], y: pusat1[1] }, { r: 250, g: 250, b: 250 }, { r: 250, g: 250, b: 250 });
+            boundaryFill(dataGambar, { x: pusat2[0], y: pusat2[1] }, { r: 250, g: 250, b: 250 }, { r: 250, g: 250, b: 250 });
+
+            lingkaran(dataGambar, x, y, radius, { r: r, g: g, b: b });
+            boundaryFill(dataGambar, { x: x, y: y }, { r: r, g: g, b: b }, { r: r, g: g, b: b });
+
+            garis(dataGambar, { x: canvas.width / 2, y: 0 }, { x: canvas.width / 2, y: canvas.width }, { r: 211, g: 211, b: 211 });
+
+            lingkaran(dataGambar, canvas.width/2, canvas.height/2, 100, {r: 211, g: 211, b:211});
+            // check if ball touch the top or bottom of canvas
+            if (y - radius + ball.dy < 5 || y + radius + ball.dy > canvas.height - 5) {
+                ball.dy = -dy;
+            }
+
+            let player = (ball.x < canvas.width / 2) ? player1 : player2;
+
+            let pusat = (ball.x < canvas.width / 2) ? pusat1 : pusat2;
+
+            // check if ball touch the player paddle
+            if (collisionCheck(ball, player)) {
+                let direction = (ball.x < canvas.width / 2) ? 1 : -1;
+                let collidePoint = ((ball.y - pusat[1]) / 50) * Math.PI / 4;
+                ball.dx = direction * Math.cos(collidePoint) * ball.speed;
+                ball.dy = Math.sin(collidePoint) * ball.speed;
+                ball.speed += 1;
+            }
+
+            if (ball.x + ball.radius > canvas.width) {
+                score1 += 1;
+                reset();
+
+
+            } else if (ball.x - ball.radius < 0) {
+                score2 += 1;
+                reset();
+            }
+
+            //move the ball every frame
+            const translation = MatrixGrafkom.createTranslation([ball.dx, ball.dy]);
+            [ball.x, ball.y] = MatrixGrafkom.transformPoint([ball.x, ball.y], translation);
+            
+            ctx.putImageData(dataGambar, 0, 0);
+            if (start) {
+                requestAnimationFrame(draw);
+            }
+        }
+
+        function reset() {
+            posX = canvas.width / 2;
+            posY = canvas.height / 2;
+            speed = 5;
+            dx = (dx < 0) ? 5 : -5;
+            dy = Math.round(Math.random()) ? 1 : -1 + Math.round(Math.random() * -5);
+            r = 10
+
+            ball = {
+                x: posX,
+                y: posY,
+                dx: dx,
+                dy: dy,
+                radius: r,
+                r: 250,
+                g: 250,
+                b: 250,
+                speed: speed
+            }
+        }
+
+        function startGame() {
+            if (!start) {
+                start = true;
+                draw();
+
+            }
+        }
+
+        let keyDown = false;
+        let keyPress = ""
+
+        let keyDown2 = false;
+        let keyPress2 = "";
+
+        document.onkeydown = function (event) {
+            if (event.key == "ArrowUp" || event.key == "ArrowDown") {
+                keyDown = true;
+                keyPress = event.key;
+            }
+            if (event.key == "w" || event.key == "s" || event.key == "W" || event.key == "S") {
+                keyDown2 = true;
+                keyPress2 = event.key;
+            }
+        };
+
+        document.onkeyup = function (event) {
+            if (event.key == "ArrowUp" || event.key == "ArrowDown") {
+                keyDown = false;
+            }
+            if (event.key == "w" || event.key == "s" || event.key == "W" || event.key == "S") {
+                keyDown2 = false;
+            }
+        }
+
+        setInterval(function () {
+            if (keyDown) {
+                if (keyPress == "ArrowUp") {
+                    if (player2[0][1] > 10) {
+                        const translation_up = MatrixGrafkom.createTranslation([0, -10]);
+                        player2 = MatrixGrafkom.transformPoints(player2, translation_up);
+                        pusat2 = MatrixGrafkom.transformPoint(pusat2, translation_up);
+
+                    }
+                }
+                if (keyPress == "ArrowDown") {
+                    if (player2[2][1] < canvas.height - 10) {
+                        const translation_down = MatrixGrafkom.createTranslation([0, 10]);
+                        player2 = MatrixGrafkom.transformPoints(player2, translation_down);
+                        pusat2 = MatrixGrafkom.transformPoint(pusat2, translation_down);
+
+                    }
+                }
+            }
+        }, 20)
+
+        setInterval(function () {
+
+            if (keyDown2) {
+                if (keyPress2 == "w" || keyPress2 == "W") {
+                    if (player1[0][1] > 10) {
+                        const translation_up = MatrixGrafkom.createTranslation([0, -10]);
+                        player1 = MatrixGrafkom.transformPoints(player1, translation_up);
+                        pusat1 = MatrixGrafkom.transformPoint(pusat1, translation_up);
+
+                    }
+                }
+                if (keyPress2 == "s" || keyPress2 == "S") {
+                    if (player1[2][1] < canvas.height - 10) {
+                        const translation_down = MatrixGrafkom.createTranslation([0, 10]);
+                        player1 = MatrixGrafkom.transformPoints(player1, translation_down);
+                        pusat1 = MatrixGrafkom.transformPoint(pusat1, translation_down);
+                    }
+                }
+            }
+        }, 20)
+
+
+        canvas.addEventListener("click", (event)=> {
+            startGame();
+        });
+                
+        draw();
+        ctx.putImageData(dataGambar, 0, 0);
+
+    </script>
+</body>
+
+</html>
